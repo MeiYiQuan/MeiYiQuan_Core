@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+		xmlns:context="http://www.springframework.org/schema/context" 
+		xmlns:mvc="http://www.springframework.org/schema/mvc" 
+		xmlns:aop="http://www.springframework.org/schema/aop" 
+		xmlns:tx="http://www.springframework.org/schema/tx" 
+		xmlns:p="http://www.springframework.org/schema/p" 
+		xsi:schemaLocation="http://www.springframework.org/schema/beans          
+							http://www.springframework.org/schema/beans/spring-beans.xsd           
+							http://www.springframework.org/schema/context          
+							http://www.springframework.org/schema/context/spring-context-4.2.xsd           
+							http://www.springframework.org/schema/mvc          
+							http://www.springframework.org/schema/mvc/spring-mvc-4.2.xsd           
+							http://www.springframework.org/schema/aop          
+							http://www.springframework.org/schema/aop/spring-aop-4.2.xsd           
+							http://www.springframework.org/schema/tx          
+							http://www.springframework.org/schema/tx/spring-tx-4.2.xsd">
+    <mvc:annotation-driven></mvc:annotation-driven>
+  	<context:component-scan base-package="com"></context:component-scan>
+  	<bean id="nologininter" class="com.salon.backstage.Interceptors.NoLoginInterceptor"></bean>
+  	
+  	<mvc:interceptors>
+  	
+  		<mvc:interceptor>
+			<mvc:mapping path="/**" />
+			<bean class="com.salon.backstage.Interceptors.TestInterceptor" />
+		</mvc:interceptor>
+  	
+  	
+		<mvc:interceptor>
+			<!-- 对所有的请求拦截使用/** ,对某个模块下的请求拦截使用：/myPath/* -->
+			<mvc:mapping path="/user/login.do" /><!-- 普通登陆 -->
+			<mvc:mapping path="/user/sso.do" /><!-- 第三方登陆 -->
+			<mvc:mapping path="/user/register.do" /><!-- 用户注册 -->
+			<mvc:mapping path="/user/getIdenCode.do" /><!-- 获取验证码 -->
+			<mvc:mapping path="/usernew/forgetPasswordd.do" /><!-- 获取验证码 -->
+			<mvc:mapping path="/district/register.do" /><!-- 返回注册时需要的地区信息 -->
+			<mvc:mapping path="/district/registerDetail.do" /><!-- 返回注册时需要的地区详细信息 -->
+			<!-- <ref bean="nologininter" /> -->
+			<bean class="com.salon.backstage.Interceptors.NoLoginInterceptor" />
+		</mvc:interceptor>
+		
+		<mvc:interceptor>
+			<!-- 对所有的请求拦截使用/** ,对某个模块下的请求拦截使用：/myPath/* -->
+			<mvc:mapping path="/**" />
+			<mvc:exclude-mapping path="/user/login.do" /><!-- 普通登陆 -->
+			<mvc:exclude-mapping path="/user/sso.do" /><!-- 第三方登陆 -->
+			<mvc:exclude-mapping path="/user/register.do" /><!-- 用户注册 -->
+			<mvc:exclude-mapping path="/user/getIdenCode.do" /><!-- 获取验证码 -->
+			<mvc:exclude-mapping path="/usernew/forgetPasswordd.do" /><!-- 获取验证码 -->
+			<mvc:exclude-mapping path="/district/register.do" /><!-- 返回注册时需要的地区信息 -->
+			<mvc:exclude-mapping path="/district/registerDetail.do" /><!-- 返回注册时需要的地区详细信息 -->
+			<mvc:exclude-mapping path="/pay/webHook.do" /><!-- 支付回调 -->
+			<!-- <ref bean="nologininter" /> -->
+			<bean class="com.salon.backstage.Interceptors.LoginInterceptor" />
+		</mvc:interceptor>
+	</mvc:interceptors>
+  
+
+  <bean class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping"></bean>
+  <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver" p:defaultEncoding="utf-8">
+    <!-- 50Mb -->
+    <property name="maxUploadSize" value="52480000"></property>
+  </bean>
+  <bean id="springContextUtils" class="com.salon.backstage.common.util.SpringContextUtils"></bean>
+  
+  <bean id="exceptionDoing" class="com.salon.backstage.homepage.ExceptionDoing"></bean>
+  
+</beans>

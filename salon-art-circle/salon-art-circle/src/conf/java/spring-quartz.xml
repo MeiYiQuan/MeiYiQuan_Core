@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>  
+<beans xmlns="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"  
+ 	xmlns:context="http://www.springframework.org/schema/context"  
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-3.2.xsd  
+   	http://www.springframework.org/schema/context 
+   	http://www.springframework.org/schema/context/spring-context-3.2.xsd"  
+   	default-autowire="byName" default-lazy-init="false"> 
+   	
+   	
+	    <bean id="updateAge" class="com.salon.backstage.qcproject.timer.YearTimer"></bean>
+	    <bean id="daydoing" class="com.salon.backstage.qcproject.timer.DayTimer"></bean>
+	    
+	    <!-- 每年1月1日的00:00:00执行一次 -->
+	    <!-- 定义调用对象和调用对象的方法 -->
+	    <bean id="jobtask" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+	        <!-- 调用的类 -->
+	        <property name="targetObject">
+	        	<ref bean="updateAge"></ref>
+	        </property>
+	        <!-- 调用类中的方法 -->
+	        <property name="targetMethod">
+	            <value>updateUserAge</value>
+	        </property>
+	    </bean>
+	    <!-- 定义触发时间 -->
+	    <bean id="doTime" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+	        <property name="jobDetail">
+	            <ref bean="jobtask"></ref>
+	        </property>
+	        <!-- cron表达式 -->
+	        <property name="cronExpression">
+	        	<!-- 每年1月1日的00:00:00执行一次 -->
+	            <value>0 0 0 1 1 ? </value>
+	        </property>
+	    </bean>
+	    
+	    <!-- 每天00:00:00执行 -->
+	    <!-- 定义调用对象和调用对象的方法 -->
+	    <bean id="jobtask1" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+	        <!-- 调用的类 -->
+	        <property name="targetObject">
+	        	<ref bean="daydoing"></ref>
+	        </property>
+	        <!-- 调用类中的方法 -->
+	        <property name="targetMethod">
+	            <value>dayDoing1</value>
+	        </property>
+	    </bean>
+	    <!-- 定义触发时间 -->
+	    <bean id="doTime1" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+	        <property name="jobDetail">
+	            <ref bean="jobtask1"></ref>
+	        </property>
+	        <!-- cron表达式 -->
+	        <property name="cronExpression">
+	        	<!-- 每天的00:00:00执行一次 -->
+	            <value>0 0 0 * * ? </value>
+	        </property>
+	    </bean>
+	    
+	    <!-- 每天09:00:00执行 -->
+	    <!-- 定义调用对象和调用对象的方法 -->
+	    <bean id="jobtask2" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+	        <!-- 调用的类 -->
+	        <property name="targetObject">
+	        	<ref bean="daydoing"></ref>
+	        </property>
+	        <!-- 调用类中的方法 -->
+	        <property name="targetMethod">
+	            <value>dayDoing2</value>
+	        </property>
+	    </bean>
+	    <!-- 定义触发时间 -->
+	    <bean id="doTime2" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+	        <property name="jobDetail">
+	            <ref bean="jobtask2"></ref>
+	        </property>
+	        <!-- cron表达式 -->
+	        <property name="cronExpression">
+	        	<!-- 每天的09:00:00执行一次 -->
+	            <value>0 0 9 * * ? </value>
+	        </property>
+	    </bean>
+	    
+	    <!-- 每天10:00:00执行 -->
+	    <!-- 定义调用对象和调用对象的方法 -->
+	    <bean id="jobtask3" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+	        <!-- 调用的类 -->
+	        <property name="targetObject">
+	        	<ref bean="daydoing"></ref>
+	        </property>
+	        <!-- 调用类中的方法 -->
+	        <property name="targetMethod">
+	            <value>dayDoing3</value>
+	        </property>
+	    </bean>
+	    <!-- 定义触发时间 -->
+	    <bean id="doTime3" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+	        <property name="jobDetail">
+	            <ref bean="jobtask3"></ref>
+	        </property>
+	        <!-- cron表达式 -->
+	        <property name="cronExpression">
+	        	<!-- 每天的10:00:00执行一次 -->
+	            <value>0 0 10 * * ? </value>
+	        </property>
+	    </bean>
+	    
+	    
+	    <!-- 总管理类 如果将lazy-init='false'那么容器启动就会执行调度程序  -->
+	    <bean id="startQuertz" lazy-init="false" class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+	        <property name="triggers">
+	            <list>
+	            	<ref bean="doTime"></ref>
+	            	<ref bean="doTime1"></ref>
+	            	<ref bean="doTime2"></ref>
+	            	<ref bean="doTime3"></ref>
+	            </list>
+	        </property>
+	    </bean>
+	 
+	</beans>

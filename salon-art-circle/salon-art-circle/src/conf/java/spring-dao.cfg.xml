@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans          http://www.springframework.org/schema/beans/spring-beans.xsd           http://www.springframework.org/schema/context          http://www.springframework.org/schema/context/spring-context-4.2.xsd           http://www.springframework.org/schema/mvc          http://www.springframework.org/schema/mvc/spring-mvc-4.2.xsd           http://www.springframework.org/schema/aop          http://www.springframework.org/schema/aop/spring-aop-4.2.xsd           http://www.springframework.org/schema/tx          http://www.springframework.org/schema/tx/spring-tx-4.2.xsd">
+	<!-- 将多个配置文件读取到容器中，交给Spring管理 -->
+	<bean id="propertyConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="locations">
+			<list>
+				<!-- 这里支持多种寻址方式：classpath和file -->
+				<value>classpath:jdbc.properties</value>
+				<value>classpath:redis.properties</value>
+			</list>
+		</property>
+	</bean>
+	<bean id="dbcpBasicDataSource" class="org.apache.commons.dbcp.BasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="${jdbc.driverClassName}"></property>
+		<property name="url" value="${jdbc.url}"></property>
+		<property name="username" value="${jdbc.username}"></property>
+		<property name="password" value="${jdbc.password}"></property>
+		<property name="maxActive">
+			<value>5</value>
+		</property>
+		<property name="initialSize">
+			<value>1</value>
+		</property>
+		<property name="maxWait">
+			<value>60000</value>
+		</property>
+		<property name="maxIdle">
+			<value>0</value>
+		</property>
+		<property name="minIdle">
+			<value>0</value>
+		</property>
+		<property name="removeAbandoned">
+			<value>true</value>
+		</property>
+		<property name="removeAbandonedTimeout">
+			<value>180</value>
+		</property>
+		<property name="poolPreparedStatements">
+			<value>true</value>
+		</property>
+		<property name="maxOpenPreparedStatements">
+			<value>10</value>
+		</property>
+		<property name="validationQuery">
+			<value>SELECT 1</value>
+		</property>
+		<property name="testOnBorrow">
+			<value>true</value>
+		</property>
+	</bean>
+	<bean id="localSessionFactoryBean"
+		class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+		<property name="dataSource" ref="dbcpBasicDataSource"></property>
+		<property name="packagesToScan">
+			<list>
+				<value>com.salon.backstage.pub.bsc.dao.po</value>
+			</list>
+		</property>
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">${jdbc.dialect}</prop>
+				<!-- <prop key="hibernate.hbm2ddl.auto">create</prop> -->
+				<prop key="hibernate.hbm2ddl.auto">update</prop>
+				<prop key="hibernate.show_sql">false</prop>
+				<prop key="generate_statistics">false</prop>
+				<prop key="hibernate.cache.region.factory_class">org.hibernate.cache.EhCacheRegionFactory</prop>
+				<!-- <prop key="hibernate.cache.provider_class">org.hibernate.cache.EhCacheProvider</prop> -->
+				<prop key="hibernate.cache.use_second_level_cache">false</prop>
+				<prop key="hibernate.cache.use_query_cache">false</prop>
+				<prop key="connection.autoReconnect">true</prop>
+				<prop key="connection.autoReconnectForPools">true</prop>
+				<prop key="connection.is-connection-validation-required">true</prop>
+			</props>
+	</property>
+	</bean>
+	<!-- 数据访问模板 -->
+	<bean id="hibernateTemplate" class="org.springframework.orm.hibernate4.HibernateTemplate">
+		<property name="sessionFactory" ref="localSessionFactoryBean"></property>
+		<!-- <property name="checkWriteOperations" value="false" ></property> -->
+	</bean>
+	<bean id="extraSpringHibernateTemplateImpl"
+		class="com.salon.backstage.common.util.ExtraSpringHibernateTemplateImpl">
+		<property name="hibernateTemplate" ref="hibernateTemplate"></property>
+	</bean>
+
+
+
+	<bean id="qcbasedao" class="com.qc.dao.BaseDao" init-method="init">
+		<property name="template" ref="hibernateTemplate"></property>
+	</bean>
+
+
+
+
+	<!-- 事务 -->
+	<bean id="transactionManager"
+		class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+		<property name="sessionFactory" ref="localSessionFactoryBean"></property>
+	</bean>
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="*" propagation="REQUIRED"></tx:method>
+		</tx:attributes>
+	</tx:advice>
+	<aop:config proxy-target-class="true">
+		<aop:pointcut id="hibernateTemplatePointcut"
+			expression="execution(* org.springframework.orm.hibernate4.HibernateTemplate.*(..))"></aop:pointcut>
+		<!-- <aop:pointcut id="hibernateTemplatePointcut" expression="execution(* 
+			com.salon.backstage.homepage.*.action.*.*(..))"></aop:pointcut> -->
+		<!-- <aop:pointcut id="hibernateTemplatePointcut" expression="execution(* 
+			com.salon.backstage.homepage.HomepageAction.*(..))"></aop:pointcut> -->
+		<!-- <aop:pointcut id="hibernateTemplatePointcut" expression="(execution(* 
+			com.salon.backstage.qcproject.action.*.*(..))) or (execution(* com.salon.backstage.homepage.*.action.*.*(..))) 
+			or (execution(* com.salon.backstage.homepage.HomepageAction.*(..)))"></aop:pointcut> -->
+		<!-- <aop:pointcut id="hibernateTemplatePointcut" expression="(execution(* 
+			com.salon.backstage.qcproject.service.impl.*.*(..))) or (execution(* com.salon.backstage.homepage.*.service.impl.*.*(..)))"></aop:pointcut> -->
+		<!-- <aop:pointcut id="hibernateTemplatePointcut" expression="execution(* 
+			com.salon.backstage.user.impl.UserServiceImpl.*(..))"></aop:pointcut> -->
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="hibernateTemplatePointcut"></aop:advisor>
+	</aop:config>
+
+
+	<!-- jedis连接池配置 -->
+	<bean id="jedisPoolConfig" class="redis.clients.jedis.JedisPoolConfig">
+		<property name="maxTotal" value="${redis.maxTotal}" />
+		<property name="maxIdle" value="${redis.maxIdle}" />
+		<property name="minIdle" value="${redis.minIdle}" />
+		<property name="maxWaitMillis" value="${redis.maxWaitMillis}" />
+		<property name="minEvictableIdleTimeMillis" value="${redis.minEvictableIdleTimeMillis}" />
+		<property name="numTestsPerEvictionRun" value="${redis.numTestsPerEvictionRun}" />
+		<property name="timeBetweenEvictionRunsMillis" value="${redis.timeBetweenEvictionRunsMillis}" />
+		<property name="testOnBorrow" value="${redis.testOnBorrow}" />
+		<property name="testOnReturn" value="${redis.testOnReturn}" />
+		<property name="testWhileIdle" value="${redis.testWhileIdle}" />
+	</bean>
+	<!-- jedis连接工厂 -->
+	<bean id="jedisConnectionFactory"
+		class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory"
+		destroy-method="destroy">
+		<property name="hostName" value="${redis.host.front}" />
+		<property name="port" value="${redis.port.front}" />
+		<property name="timeout" value="${redis.timeout}" />
+		<property name="database" value="${redis.database.front}" />
+		<property name="usePool" value="${redis.use.pool}" />
+		<property name="poolConfig" ref="jedisPoolConfig" />
+	</bean>
+
+	<!-- redis template definition p表示对该bean里面的属性进行注入，格式为p:属性名=注入的对象 效果与在bean里面使用<property>标签一样 -->
+	<bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate">
+		<!-- 序列化方式 建议key/hashKey采用StringRedisSerializer。 -->
+		<property name="connectionFactory" ref="jedisConnectionFactory" />
+		<property name="keySerializer">
+			<bean
+				class="org.springframework.data.redis.serializer.StringRedisSerializer" />
+		</property>
+		<property name="hashKeySerializer">
+			<bean
+				class="org.springframework.data.redis.serializer.StringRedisSerializer" />
+		</property>
+		<property name="valueSerializer">
+			<bean
+				class="org.springframework.data.redis.serializer.JdkSerializationRedisSerializer" />
+		</property>
+		<property name="hashValueSerializer">
+			<bean
+				class="org.springframework.data.redis.serializer.JdkSerializationRedisSerializer" />
+		</property>
+	</bean>
+	<!-- 对string操作的封装 -->
+	<bean id="stringRedisTemplate" class="org.springframework.data.redis.core.StringRedisTemplate">
+		<property name="connectionFactory" ref="jedisConnectionFactory" />
+	</bean>
+</beans>
+
+
+
+
+
+
